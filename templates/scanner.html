@@ -1,0 +1,718 @@
+{% extends "base.html" %}
+
+{% block title %}AI Scanner · VegScan{% endblock %}
+
+{% block content %}
+<!-- Main Scanner Section -->
+<div class="space-y-8">
+  <style>
+    /* Scanner HUD and particles */
+    .scan-reticle { position: absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:44%; height:44%; border:2px solid rgba(6,182,212,0.14); border-radius:18px; pointer-events:none; box-shadow:0 8px 30px rgba(2,6,23,0.6) inset; }
+    .scan-beam { position:absolute; left:0; right:0; top:40%; height:6px; background: linear-gradient(90deg, rgba(255,255,255,0.05), var(--accent), rgba(255,255,255,0.05)); opacity:0.85; filter: blur(6px); transform:translateY(-200%); }
+    .particle { position:absolute; width:8px; height:8px; border-radius:50%; pointer-events:none; mix-blend-mode:screen; }
+    .confidence-meter { width:120px; height:120px; border-radius:999px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(2,6,23,0.6); }
+    .meter-ring { position:relative; width:100px; height:100px; border-radius:50%; background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,0.08) 0deg); display:flex; align-items:center; justify-content:center; }
+    .meter-value { font-weight:700; color:#e6f9fb; }
+    .tip-box { font-size:0.9rem; color:#cbd5f5; background: rgba(255,255,255,0.02); padding:0.75rem; border-radius:12px; }
+    @media (prefers-reduced-motion: reduce) { .scan-beam, .particle { animation: none !important; transition: none !important; } }
+  </style>
+  <!-- Header -->
+  <div class="text-center space-y-4 mb-12">
+    <h1 class="text-5xl md:text-6xl font-display font-black tracking-tight">
+      <span class="bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400 bg-clip-text text-transparent">AI Scanner</span>
+    </h1>
+    <p class="text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed font-light">
+      Position your webcam towards any vegetable and let our advanced AI instantly recognize it with professional accuracy
+    </p>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="grid lg:grid-cols-3 gap-8">
+    <!-- Left Column - Camera -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Camera Feed Card -->
+      <div class="group relative">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/30 to-emerald-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition opacity-0 group-hover:opacity-100"></div>
+        <div class="relative rounded-3xl overflow-hidden border border-white/10 bg-black shadow-2xl">
+          <video id="video" autoplay playsinline muted class="w-full aspect-video object-cover"></video>
+            <!-- HUD overlays -->
+            <div class="scan-reticle" aria-hidden="true"></div>
+            <div id="scan-beam" class="scan-beam" aria-hidden="true"></div>
+            <div id="particle-layer" class="absolute inset-0 pointer-events-none"></div>
+          <div class="absolute inset-0 pointer-events-none border-2 border-dashed border-cyan-400/30 rounded-3xl"></div>
+        </div>
+      </div>
+
+      <!-- Camera Controls -->
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          id="startBtn"
+          class="group relative rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-4 px-6 font-bold text-white text-center hover:shadow-2xl hover:shadow-emerald-500/40 transition overflow-hidden"
+        >
+          <span class="relative z-10">🎥 Start Camera</span>
+        </button>
+
+        <button
+          id="snapBtn"
+          class="group relative rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 py-4 px-6 font-bold text-white text-center hover:shadow-2xl hover:shadow-cyan-500/40 transition overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
+        >
+          <span class="relative z-10">📸 Capture</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Column - Controls -->
+    <div class="space-y-6">
+      <!-- Confidence Meter -->
+      <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-ai-card to-ai-card/50 backdrop-blur p-6 flex items-center gap-4">
+        <div class="confidence-meter">
+          <div class="meter-ring" id="meterRing" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="meter-value" id="meterValue">0%</div>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-cyan-300">Model Confidence</h4>
+          <p class="text-slate-400 text-sm mt-1">Shows average confidence across scanned images.</p>
+        </div>
+      </div>
+
+      <!-- Model Selection Card -->
+      <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-ai-card to-ai-card/50 backdrop-blur p-6">
+        <h3 class="text-sm font-bold text-cyan-400 mb-4 flex items-center gap-2">
+          <span>🧠</span> AI Model
+        </h3>
+        <select
+          id="modelSelect"
+          class="w-full rounded-lg bg-white/5 border border-white/10 text-white py-3 px-4 focus:border-cyan-400 focus:bg-white/10 focus:ring-2 focus:ring-cyan-400/20 transition font-medium"
+        >
+          <option value="ensemble">⭐ Ensemble Model (BEST ACCURACY)</option>
+          <option value="model1">VGG16 (Deep Learning)</option>
+          <option value="model2">MobileNetV2 (Lightweight)</option>
+        </select>
+        <p class="text-xs text-slate-500 mt-3 font-light">Dual models combined for highest accuracy</p>
+      </div>
+
+      <!-- Scanner Info Card -->
+      <div id="tipsCard" class="rounded-2xl border border-white/10 bg-gradient-to-br from-ai-card to-ai-card/50 backdrop-blur p-6">
+        <h3 class="text-sm font-bold text-emerald-400 mb-4 flex items-center gap-2">
+          <span>📊</span> Scanner Features
+        </h3>
+        <div class="space-y-2 text-sm text-slate-300 font-light">
+          <p>✓ Real-time Processing</p>
+          <p>✓ Multiple Image Support</p>
+          <p>✓ 60%+ Confidence Required</p>
+          <p>✓ Instant AI Results</p>
+        </div>
+        <div id="contextTip" class="mt-4 tip-box" style="display:none"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-3">
+        <button
+          id="scanBtn"
+          class="w-full group relative rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 py-4 px-6 font-bold text-white hover:shadow-2xl hover:shadow-purple-500/40 transition overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
+        >
+          <span class="relative z-10">🔍 Scan All</span>
+        </button>
+
+        <button
+          id="clearBtn"
+          class="w-full group relative rounded-xl bg-gradient-to-r from-slate-600 to-slate-700 py-3 px-6 font-bold text-white hover:shadow-lg transition overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
+        >
+          <span class="relative z-10">🗑️ Clear All</span>
+        </button>
+
+        <button
+          id="generateRecipeBtn"
+          class="w-full group relative rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3 px-6 font-bold text-white hover:shadow-2xl hover:shadow-orange-500/40 transition overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
+        >
+          <span class="relative z-10">👨‍🍳 Recipe</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery Section -->
+  <div class="space-y-6">
+    <h2 class="text-2xl font-display font-bold flex items-center gap-3">
+      <span>📸</span> Captured Images
+    </h2>
+    <div id="resultsGallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[200px]">
+      <div class="col-span-full flex items-center justify-center py-12 text-center">
+        <p class="text-slate-400">No images captured yet. Start by clicking "Start Camera" above.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK MODAL -->
+<div id="feedbackModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+  <div class="rounded-2xl bg-gradient-to-br from-ai-card to-ai-card/50 backdrop-blur-xl border border-white/10 shadow-xl max-w-sm w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
+    <!-- Header -->
+    <div>
+      <h2 id="feedbackModalTitle" class="text-xl font-display font-bold text-white mb-1">What is this?</h2>
+      <p id="feedbackModalSubtitle" class="text-slate-400 text-xs">Your answer helps us improve</p>
+    </div>
+    
+    <!-- Preview Image (Smaller) -->
+    <div class="rounded-lg overflow-hidden border border-white/10">
+      <img id="feedbackImagePreview" src="" alt="Feedback" class="w-full aspect-square object-cover">
+    </div>
+    
+    <!-- Original Prediction (only show if valid prediction) -->
+    <div id="feedbackPredictionBox" class="rounded-lg bg-white/5 border border-white/10 p-2 text-center">
+      <p class="text-xs text-slate-500 mb-0.5">We Guessed</p>
+      <p id="feedbackPredicted" class="text-sm font-bold text-cyan-400"></p>
+    </div>
+    
+    <!-- Vegetable Selection (Compact) -->
+    <select
+      id="correctVegetable"
+      class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-slate-500 focus:border-emerald-400 focus:bg-white/10 focus:ring-2 focus:ring-emerald-400/20 transition"
+      required
+    >
+      <option value="">-- What is it? --</option>
+    </select>
+    
+    <!-- Buttons (Compact) -->
+    <div class="grid grid-cols-2 gap-2 pt-2">
+      <button
+        id="feedbackCancel"
+        class="rounded-lg bg-slate-600/50 hover:bg-slate-600 text-white py-2 text-sm font-bold transition"
+      >
+        Cancel
+      </button>
+      <button
+        id="feedbackSubmit"
+        class="rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-white py-2 text-sm font-bold hover:shadow-lg hover:shadow-emerald-500/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled
+      >
+        Save ✓
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS TOAST -->
+<div id="feedbackToast" class="fixed bottom-6 right-6 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-6 py-4 shadow-2xl hidden animate-in fade-in zoom-in-95 duration-300 z-50">
+  <p id="feedbackToastTitle" class="font-bold">✓ Image classified successfully!</p>
+  <p id="feedbackToastMessage" class="text-sm opacity-90">Thank you for helping improve our AI</p>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const startBtn = document.getElementById('startBtn');
+const snapBtn = document.getElementById('snapBtn');
+const scanBtn = document.getElementById('scanBtn');
+const clearBtn = document.getElementById('clearBtn');
+const resultsGallery = document.getElementById('resultsGallery');
+const generateRecipeBtn = document.getElementById('generateRecipeBtn');
+const modelSelect = document.getElementById('modelSelect');
+
+let stream = null;
+let captured = [];
+
+// CSRF helper
+function csrftoken() {
+  const name = 'csrftoken=';
+  return document.cookie.split('; ').find(r => r.startsWith(name))?.split('=')[1] || '';
+}
+
+// Start camera
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    video.srcObject = stream;
+    snapBtn.disabled = false;
+    startBtn.textContent = '✓ Camera Active';
+    startBtn.disabled = true;
+  } catch(e) {
+    alert('Camera error: ' + e.message);
+  }
+}
+
+// Update buttons
+function updateButtons() {
+  snapBtn.disabled = !stream;
+  scanBtn.disabled = captured.length === 0;
+  clearBtn.disabled = captured.length === 0;
+  generateRecipeBtn.disabled = captured.every(c => !c.result);
+}
+
+// Render gallery
+function renderGallery() {
+  resultsGallery.innerHTML = '';
+  
+  if (captured.length === 0) {
+    resultsGallery.innerHTML = '<div class="col-span-full flex items-center justify-center py-12 text-center"><p class="text-slate-400">No images captured yet. Start by clicking "Start Camera" above.</p></div>';
+    return;
+  }
+  
+  captured.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'group relative rounded-2xl border border-white/10 bg-gradient-to-br from-ai-card to-ai-card/50 backdrop-blur overflow-hidden shadow-lg hover:shadow-xl hover:border-white/20 transition';
+    
+    // Delete button (X) at top right
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'absolute top-3 right-3 z-10 w-8 h-8 bg-red-500/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg transition backdrop-blur';
+    deleteBtn.innerHTML = '×';
+    deleteBtn.type = 'button';
+    deleteBtn.onclick = (e) => {
+      e.preventDefault();
+      deleteImage(i);
+    };
+    
+    // Idea (bulb) button below delete button
+    const ideaBtn = document.createElement('button');
+    ideaBtn.className = 'absolute top-14 right-3 z-10 w-9 h-9 bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-300 rounded-full flex items-center justify-center text-lg shadow-lg transition backdrop-blur filter drop-shadow-lg';
+    ideaBtn.innerHTML = '💡';
+    ideaBtn.type = 'button';
+    ideaBtn.setAttribute('aria-label', 'Suggest label');
+    ideaBtn.onclick = (e) => {
+      e.preventDefault();
+      const predictedLabel = (c.result && c.result.label) ? c.result.label : 'Invalid Image';
+      showFeedbackModal(i, predictedLabel);
+    };
+    
+    const isInvalid = c.result && !c.result.is_valid;
+    const labelColor = isInvalid ? 'text-red-400' : 'text-emerald-400';
+    const bgGradient = isInvalid ? 'from-red-500/20 to-red-600/10' : 'from-emerald-500/20 to-teal-600/10';
+    
+    card.innerHTML = `
+      <div class="relative overflow-hidden">
+        <img src="${c.url}" class="w-full aspect-square object-cover group-hover:scale-105 transition duration-300"/>
+        <div class="absolute inset-0 bg-gradient-to-t ${bgGradient}"></div>
+      </div>
+      <div class="p-4 space-y-3">
+        <p class="text-sm font-medium text-slate-300">Image ${i+1}</p>
+        ${c.result ? `
+          <div class="space-y-1">
+            <p class="${labelColor} font-bold text-lg">${c.result.label}</p>
+            <p class="text-slate-400 text-sm">
+              <span class="font-semibold">${(c.result.confidence_percent || c.result.confidence*100).toFixed(1)}%</span> confidence
+            </p>
+            ${c.result.warning ? `<p class="text-yellow-300 text-xs flex items-center gap-1">⚠️ ${c.result.warning}</p>` : ''}
+          </div>
+          <!-- Feedback Buttons - Always show Right & Wrong -->
+          <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-white/10">
+            <button
+              class="feedbackRightBtn px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-sm font-bold rounded-lg transition"
+              data-image-index="${i}"
+              data-label="${c.result.label}"
+            >
+              ✓ Right
+            </button>
+            <button
+              class="feedbackWrongBtn px-3 py-2 ${c.result.is_valid ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300' : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300'} text-sm font-bold rounded-lg transition"
+              data-image-index="${i}"
+              data-label="${c.result.label}"
+            >
+              ✗ Wrong
+            </button>
+          </div>
+        ` : '<p class="text-slate-500 italic text-sm">Waiting to scan...</p>'}
+      </div>
+    `;
+    
+    card.appendChild(deleteBtn);
+    card.appendChild(ideaBtn);
+    resultsGallery.appendChild(card);
+  });
+  
+  // Attach event listeners to feedback buttons
+  attachFeedbackListeners();
+}
+
+// Delete individual image
+function deleteImage(index) {
+  URL.revokeObjectURL(captured[index].url);
+  captured.splice(index, 1);
+  renderGallery();
+  updateButtons();
+}
+
+// Attach feedback button listeners
+function attachFeedbackListeners() {
+  // Right button - show success (prediction was correct)
+  document.querySelectorAll('.feedbackRightBtn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const label = btn.dataset.label;
+      // If the prediction was 'Invalid Image' show a generic thank-you
+      if (!label || label === 'Invalid Image') {
+        showSuccessToast(
+          `Thank you, we tried our best. Your confirmation helps us improve.`,
+          '✓ Thanks!'
+        );
+      } else {
+        showSuccessToast(
+          `You confirmed this is ${label}. Great!`,
+          '✓ Prediction confirmed!'
+        );
+      }
+    });
+  });
+  
+  // Wrong button or Add Idea button - show modal
+  document.querySelectorAll('.feedbackWrongBtn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const imageIndex = parseInt(btn.dataset.imageIndex);
+      const predictedLabel = btn.dataset.label;
+      showFeedbackModal(imageIndex, predictedLabel);
+    });
+  });
+}
+
+// Show feedback modal for wrong predictions OR invalid images
+function showFeedbackModal(imageIndex, predictedLabel) {
+  const modal = document.getElementById('feedbackModal');
+  const preview = document.getElementById('feedbackImagePreview');
+  const predicted = document.getElementById('feedbackPredicted');
+  const select = document.getElementById('correctVegetable');
+  const predictionBox = document.getElementById('feedbackPredictionBox');
+  const title = document.getElementById('feedbackModalTitle');
+  const subtitle = document.getElementById('feedbackModalSubtitle');
+  
+  // Set image
+  preview.src = captured[imageIndex].url;
+  
+  // Check if this is a valid or invalid image
+  const isInvalidImage = predictedLabel === 'Invalid Image';
+  
+  // Store reference for submission
+  modal.dataset.imageIndex = imageIndex;
+  modal.dataset.predictedLabel = predictedLabel;
+  modal.dataset.isInvalid = isInvalidImage;
+  
+  // Customize modal text based on image validity
+  if (isInvalidImage) {
+    title.textContent = '💡 What is this?';
+    subtitle.textContent = 'Tell us what you see';
+    predictionBox.style.display = 'none';
+  } else {
+    title.textContent = 'What is it?';
+    subtitle.textContent = 'Your answer helps us improve';
+    predicted.textContent = predictedLabel;
+    predictionBox.style.display = 'block';
+  }
+  
+  // Reset form
+  select.value = '';
+  
+  // Show modal
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+// Submit feedback
+async function submitFeedback() {
+  const modal = document.getElementById('feedbackModal');
+  const imageIndex = parseInt(modal.dataset.imageIndex);
+  const predictedLabel = modal.dataset.predictedLabel;
+  const isInvalid = modal.dataset.isInvalid === 'true';
+  const correctLabel = document.getElementById('correctVegetable').value;
+  const submitBtn = document.getElementById('feedbackSubmit');
+  
+  if (!correctLabel) {
+    alert('Please select an option');
+    return;
+  }
+  
+  try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Saving...';
+    
+    const form = new FormData();
+    form.append('image', captured[imageIndex].blob, 'feedback_image.jpg');
+    form.append('predicted_label', predictedLabel);
+    form.append('correct_label', correctLabel);
+    
+    const resp = await fetch("{% url 'save_feedback_api' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken() },
+      body: form
+    });
+    
+    if (!resp.ok) {
+      const errData = await resp.json();
+      throw new Error(errData.error || 'Failed to save feedback');
+    }
+    
+    const data = await resp.json();
+    
+    // Close modal
+    closeFeedbackModal();
+    
+    // Check if user's answer matches model's prediction
+    const isMatch = predictedLabel.toLowerCase() === correctLabel.toLowerCase();
+    
+    // Show success message based on match
+    if (isMatch && !isInvalid) {
+      // User confirmed what the model predicted
+      showSuccessToast(
+        `That's exactly what we said! Perfect match! 🎯`,
+        '✓ Great minds think alike!'
+      );
+    } else if (correctLabel === 'not_vegetable') {
+      // User identified it as not a vegetable
+      showSuccessToast(
+        `Thanks for letting us know! We'll improve our detection.`,
+        '💡 Noted!'
+      );
+    } else {
+      // User provided correction or new information
+      showSuccessToast(
+        `Thanks for the feedback! We'll use this to train our model further.`,
+        '✓ Feedback saved!'
+      );
+    }
+    
+  } catch(e) {
+    alert('Error saving feedback: ' + e.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save ✓';
+  }
+}
+
+// Close modal
+function closeFeedbackModal() {
+  const modal = document.getElementById('feedbackModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+// Show success toast with custom message
+function showSuccessToast(message, title) {
+  const toast = document.getElementById('feedbackToast');
+  const toastTitle = document.getElementById('feedbackToastTitle');
+  const toastMessage = document.getElementById('feedbackToastMessage');
+  
+  toastTitle.textContent = title || '✓ Saved successfully!';
+  toastMessage.textContent = message || 'Thank you for helping improve our AI';
+  
+  toast.classList.remove('hidden');
+  
+  setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 3500);
+}
+
+// Modal event listeners
+document.getElementById('feedbackCancel').addEventListener('click', closeFeedbackModal);
+document.getElementById('feedbackSubmit').addEventListener('click', submitFeedback);
+
+// Close modal when clicking backdrop
+document.getElementById('feedbackModal').addEventListener('click', (e) => {
+  if (e.target.id === 'feedbackModal') {
+    closeFeedbackModal();
+  }
+});
+
+// Populate vegetable dropdown
+const veggieList = ['bean', 'broccoli', 'bottle_gourd', 'brinjal', 'bitter_gourd', 'cabbage', 'capsicum', 'carrot', 'cauliflower', 'potato', 'pumpkin', 'radish', 'tomato'];
+const selectElement = document.getElementById('correctVegetable');
+selectElement.innerHTML = '<option value="">-- What is it? --</option>';
+
+// Add "Not a vegetable" option first
+const notVeggieOpt = document.createElement('option');
+notVeggieOpt.value = 'not_vegetable';
+notVeggieOpt.textContent = '🚫 Not a vegetable';
+selectElement.appendChild(notVeggieOpt);
+
+// Add vegetable options
+veggieList.forEach(v => {
+  const opt = document.createElement('option');
+  opt.value = v;
+  opt.textContent = v.replace(/_/g, ' ').split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+  selectElement.appendChild(opt);
+});
+
+// Enable submit button when option is selected
+selectElement.addEventListener('change', () => {
+  document.getElementById('feedbackSubmit').disabled = !selectElement.value;
+});
+
+  function handleScanResults(items) {
+    try {
+      if (!items || !items.length) return;
+      // compute average confidence (only valid ones count)
+      const confidences = items.map(i => i.confidence || 0);
+      const avg = confidences.reduce((a,b)=>a+b,0) / confidences.length;
+      updateConfidenceMeter(avg);
+
+      // show tip if many invalid
+      const invalidCount = items.filter(i => i.is_valid === false).length;
+      if (invalidCount > 0) {
+        showTip('Some images were not recognized. Try better lighting or closer framing.');
+      } else {
+        clearTip();
+      }
+
+      // if any very confident predictions, spawn particles and accent tint
+      const high = items.filter(i => (i.confidence || 0) >= 0.85);
+      if (high.length > 0) {
+        spawnParticles(18, getColorForLabel(high[0].label));
+        applyAccentColorForLabel(high[0].label);
+      }
+
+      // animate scan beam briefly
+      animateBeam();
+    } catch(e) { console.warn(e); }
+  }
+
+  function updateConfidenceMeter(value) {
+    const pct = Math.round((value || 0) * 100);
+    const meter = document.getElementById('meterRing');
+    const val = document.getElementById('meterValue');
+    if (!meter || !val) return;
+    val.textContent = `${pct}%`;
+    const deg = Math.min(360, Math.max(0, (value || 0) * 360));
+    meter.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(255,255,255,0.06) ${deg}deg)`;
+    meter.setAttribute('aria-valuenow', pct);
+  }
+
+  function spawnParticles(count, color) {
+    const layer = document.getElementById('particle-layer');
+    if (!layer) return;
+    for (let i=0;i<count;i++) {
+      const d = document.createElement('div');
+      d.className = 'particle';
+      d.style.background = color || 'rgba(6,182,212,0.9)';
+      const x = layer.clientWidth/2 + (Math.random()-0.5)*200;
+      const y = layer.clientHeight/2 + (Math.random()-0.5)*120;
+      d.style.left = `${x}px`;
+      d.style.top = `${y}px`;
+      d.style.opacity = '0.95';
+      layer.appendChild(d);
+      const dx = (Math.random()-0.5)*600;
+      const dy = -(100 + Math.random()*300);
+      d.animate([
+        { transform: 'translate(0,0) scale(1)', opacity:1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.6)`, opacity:0 }
+      ], { duration: 800 + Math.random()*600, easing: 'cubic-bezier(.2,.9,.2,1)' });
+      setTimeout(()=> d.remove(), 1600);
+    }
+  }
+
+  function getColorForLabel(label) {
+    const map = {
+      'cabbage':'#7ee787','tomato':'#ff6b6b','carrot':'#ffb86b','broccoli':'#7be4a3','potato':'#d9c287','pumpkin':'#ff9e5c'
+    };
+    return map[label] || 'rgba(6,182,212,0.95)';
+  }
+
+  function applyAccentColorForLabel(label) {
+    const c = getColorForLabel(label);
+    document.documentElement.style.setProperty('--accent', c);
+    // revert after short delay
+    setTimeout(()=> document.documentElement.style.setProperty('--accent','#06b6d4'), 2000);
+  }
+
+  function showTip(msg) { const el = document.getElementById('contextTip'); if (!el) return; el.style.display='block'; el.textContent = msg; }
+  function clearTip() { const el = document.getElementById('contextTip'); if (!el) return; el.style.display='none'; el.textContent=''; }
+
+  function animateBeam() {
+    const beam = document.getElementById('scan-beam');
+    if (!beam) return;
+    beam.style.transition = 'none';
+    beam.style.transform = 'translateY(-120%)';
+    void beam.offsetWidth;
+    beam.style.transition = 'transform 700ms cubic-bezier(.2,.9,.2,1), opacity 400ms ease';
+    beam.style.transform = 'translateY(0%)';
+    setTimeout(()=> { beam.style.transform = 'translateY(120%)'; }, 700);
+  }
+// Capture image
+async function capture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+  const url = URL.createObjectURL(blob);
+  captured.push({ blob, url, result: null });
+  renderGallery();
+  updateButtons();
+}
+
+// Scan images
+async function scanVegetables() {
+  if(captured.length === 0) return;
+
+  // Show loading message
+  const originalText = scanBtn.textContent;
+  scanBtn.textContent = '⏳ Scanning...';
+  scanBtn.disabled = true;
+
+  const form = new FormData();
+  captured.forEach((c, i) => form.append('images', c.blob, `capture_${i+1}.jpg`));
+
+  // send selected model
+  form.append('model', modelSelect.value);
+
+  try {
+    const resp = await fetch("{% url 'scan_batch_api' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken() },
+      body: form
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(text);
+    }
+
+    const data = await resp.json();
+    data.items.forEach((it, idx) => captured[idx].result = it);
+    renderGallery();
+    updateButtons();
+    handleScanResults(data.items);
+
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    scanBtn.textContent = originalText;
+    scanBtn.disabled = false;
+  }
+}
+
+// Clear gallery
+function clearGallery() {
+  captured.forEach(c => URL.revokeObjectURL(c.url));
+  captured = [];
+  renderGallery();
+  updateButtons();
+}
+
+// Generate recipe
+generateRecipeBtn.addEventListener('click', () => {
+  const detectedVeggies = [...new Set(captured.map(c => c.result?.label).filter(Boolean).filter(l => l !== 'Invalid Image'))];
+
+  if(detectedVeggies.length === 0) {
+    alert('No valid vegetables detected yet!');
+    return;
+  }
+
+  const params = new URLSearchParams();
+  detectedVeggies.forEach(v => params.append('veg', v));
+
+  // include selected model
+  params.append('model', modelSelect.value);
+
+  window.location.href = `/classify/recipe/?${params.toString()}`;
+});
+
+// Button listeners
+startBtn.addEventListener('click', startCamera);
+snapBtn.addEventListener('click', capture);
+scanBtn.addEventListener('click', scanVegetables);
+clearBtn.addEventListener('click', clearGallery);
+
+updateButtons();
+</script>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Home · VegScan AI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative overflow-hidden py-12">
+  <div class="grid md:grid-cols-2 gap-12 items-center">
+    <!-- Left Side - Text -->
+    <div class="space-y-8 z-10">
+      <div>
+        <h1 class="text-5xl md:text-6xl font-display font-bold mb-4 leading-tight">
+          The Future of
+          <span class="bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400 bg-clip-text text-transparent">Vegetable Recognition</span>
+        </h1>
+        <p class="text-lg text-slate-300 leading-relaxed">
+          Harness the power of AI to instantly recognize vegetables from your webcam. Our advanced deep learning models deliver unmatched accuracy.
+        </p>
+      </div>
+
+      <div class="flex gap-4">
+        {% if user.is_authenticated %}
+          <a href="/scanner/" class="btn-glow inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-8 py-4 font-bold text-slate-900 hover:shadow-2xl hover:shadow-cyan-500/40 transition">
+            Start Scanning 🚀
+          </a>
+        {% else %}
+          <a href="/register/" class="btn-glow inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-8 py-4 font-bold text-slate-900 hover:shadow-2xl hover:shadow-cyan-500/40 transition">
+            Try VegScan Free 🚀
+          </a>
+        {% endif %}
+        <a href="#features" class="inline-block rounded-xl border-2 border-cyan-400 px-8 py-4 font-bold text-cyan-400 hover:bg-cyan-400/10 transition">
+          Learn More ↓
+        </a>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-6 pt-8 border-t border-white/10">
+        <div>
+          <p class="text-4xl font-display font-black bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">13</p>
+          <p class="text-slate-400 text-sm font-medium mt-1">Vegetable Types</p>
+        </div>
+        <div>
+          <p class="text-4xl font-display font-black bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">98%+</p>
+          <p class="text-slate-400 text-sm font-medium mt-1">Accuracy Rate</p>
+        </div>
+        <div>
+          <p class="text-4xl font-display font-black bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">⚡</p>
+          <p class="text-slate-400 text-sm font-medium mt-1">Real-time Processing</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side - Visual (Slideshow) -->
+    <div class="relative h-[400px] md:h-[500px]">
+      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-cyan-500/30 rounded-2xl blur-2xl"></div>
+      <div class="relative bg-gradient-to-br from-purple-600 to-cyan-600 rounded-3xl p-4 flex items-center justify-center h-full overflow-hidden">
+        <!-- Animated slideshow: two stacked images for crossfade + pop animation -->
+        <div id="hero-slideshow-wrap" class="relative w-full h-full rounded-2xl shadow-2xl overflow-hidden">
+          <img id="hero-slideshow-back" src="" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700" style="transform: scale(1); opacity: 1;" />
+          <img id="hero-slideshow-front" src="" alt="" class="absolute inset-0 w-full h-full object-cover pointer-events-none" style="opacity: 0; transform: scale(0.96);" />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="mt-24 space-y-12">
+  <div class="text-center space-y-4 mb-12">
+    <h2 class="text-4xl md:text-5xl font-display font-black tracking-tight">Why Choose VegScan?</h2>
+    <p class="text-lg text-slate-400 font-light">Enterprise-grade AI technology with premium simplicity</p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <!-- Feature 1 -->
+    <div class="group relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition opacity-0 group-hover:opacity-100"></div>
+      <div class="relative rounded-2xl bg-ai-card/40 backdrop-blur border border-white/10 p-8 hover:border-white/30 transition">
+        <div class="text-5xl mb-4">🧠</div>
+        <h3 class="font-display font-bold text-xl mb-3 text-white">Dual Model Ensemble</h3>
+        <p class="text-slate-400 leading-relaxed font-light">
+          VGG16 and MobileNetV2 advanced neural networks working in perfect harmony for maximum accuracy.
+        </p>
+      </div>
+    </div>
+
+    <!-- Feature 2 -->
+    <div class="group relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-purple-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition opacity-0 group-hover:opacity-100"></div>
+      <div class="relative rounded-2xl bg-ai-card/40 backdrop-blur border border-white/10 p-8 hover:border-white/30 transition">
+        <div class="text-5xl mb-4">📷</div>
+        <h3 class="font-display font-bold text-xl mb-3 text-white">Real-time Processing</h3>
+        <p class="text-slate-400 leading-relaxed font-light">
+          Instant results powered by your webcam. No delays, no complications—just pure AI capability.
+        </p>
+      </div>
+    </div>
+
+    <!-- Feature 3 -->
+    <div class="group relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition opacity-0 group-hover:opacity-100"></div>
+      <div class="relative rounded-2xl bg-ai-card/40 backdrop-blur border border-white/10 p-8 hover:border-white/30 transition">
+        <div class="text-5xl mb-4">🎯</div>
+        <h3 class="font-display font-bold text-xl mb-3 text-white">Intelligent Filtering</h3>
+        <p class="text-slate-400 leading-relaxed font-light">
+          Sophisticated confidence thresholds ensure only high-quality predictions pass through.
+        </p>
+      </div>
+    </div>
+
+    <!-- Feature 4 -->
+    <div class="group relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition opacity-0 group-hover:opacity-100"></div>
+      <div class="relative rounded-2xl bg-ai-card/40 backdrop-blur border border-white/10 p-8 hover:border-white/30 transition">
+        <div class="text-5xl mb-4">🔬</div>
+        <h3 class="font-display font-bold text-xl mb-3 text-white">Research-Grade</h3>
+        <p class="text-slate-400 leading-relaxed font-light">
+          Built with PyTorch and trained on professional-grade vegetable image datasets.
+        </p>
+      </div>
+    </div>
+
+    <!-- Feature 5 -->
+    <div class="group relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition opacity-0 group-hover:opacity-100"></div>
+      <div class="relative rounded-2xl bg-ai-card/40 backdrop-blur border border-white/10 p-8 hover:border-white/30 transition">
+        <div class="text-5xl mb-4">⚡</div>
+        <h3 class="font-display font-bold text-xl mb-3 text-white">Lightning Fast</h3>
+        <p class="text-slate-400 leading-relaxed font-light">
+          Batch processing support for scanning multiple vegetables simultaneously with blazing speed.
+        </p>
+      </div>
+    </div>
+
+    <!-- Feature 6 -->
+    <div class="group relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-emerald-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition opacity-0 group-hover:opacity-100"></div>
+      <div class="relative rounded-2xl bg-ai-card/40 backdrop-blur border border-white/10 p-8 hover:border-white/30 transition">
+        <div class="text-5xl mb-4">🛡️</div>
+        <h3 class="font-display font-bold text-xl mb-3 text-white">Privacy Focused</h3>
+        <p class="text-slate-400 leading-relaxed font-light">
+          All image processing occurs locally. Zero data collection, zero external storage.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Small scoped styles for slideshow entrance/pop
+const style = document.createElement('style');
+style.innerHTML = `
+  #hero-slideshow-wrap img { backface-visibility: hidden; will-change: transform, opacity; }
+  #hero-slideshow-wrap img { transition: opacity 600ms ease, transform 600ms ease; }
+`;
+document.head.appendChild(style);
+// Fetch slideshow images and rotate every 2 seconds
+    async function loadSlideshow() {
+      try {
+        const res = await fetch('/api/slideshow/');
+        const data = await res.json();
+        const images = (data.images || []).map(i => i.url);
+        if (!images.length) return;
+        const front = document.getElementById('hero-slideshow-front');
+        const back = document.getElementById('hero-slideshow-back');
+        let idx = 0;
+        // Preload and seed back/front
+        images.forEach(src => { const img = new Image(); img.src = src; });
+        back.src = images[0];
+        front.src = images[1 % images.length] || images[0];
+
+        const animateTo = (nextSrc) => {
+          front.src = nextSrc;
+          // trigger pop/fade animation by toggling styles
+          front.style.transition = 'none';
+          front.style.opacity = '0';
+          front.style.transform = 'scale(0.96) translateY(6px)';
+          // force reflow
+          void front.offsetWidth;
+          front.style.transition = 'opacity 600ms cubic-bezier(.2,.9,.2,1), transform 600ms cubic-bezier(.2,.9,.2,1)';
+          front.style.opacity = '1';
+          front.style.transform = 'scale(1.02) translateY(0px)';
+
+          // after entrance, settle and swap
+          setTimeout(() => {
+            front.style.transition = 'transform 400ms ease, opacity 400ms ease';
+            front.style.transform = 'scale(1)';
+            // swap images: back takes current front, front preloads next
+            back.src = front.src;
+          }, 650);
+        };
+
+        setInterval(() => {
+          idx = (idx + 1) % images.length;
+          animateTo(images[idx]);
+        }, 2000);
+      } catch (e) {
+        console.warn('Slideshow load failed', e);
+      }
+    }
+
+document.addEventListener('DOMContentLoaded', loadSlideshow);
+</script>
+
+<!-- CTA Section -->
+<section class="mt-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-emerald-500/10 rounded-3xl blur-xl"></div>
+  <div class="relative rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/5 to-emerald-500/5 backdrop-blur p-12 text-center">
+    <h2 class="text-4xl font-display font-black mb-6 tracking-tight">Ready to Revolutionize Vegetable Recognition?</h2>
+    <p class="text-lg text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed font-light">
+      Join thousands of users already experiencing the power of VegScan AI for instant, accurate vegetable identification.
+    </p>
+    {% if user.is_authenticated %}
+      <a href="/scanner/" class="btn-glow inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-10 py-4 font-bold text-slate-900 hover:shadow-2xl hover:shadow-cyan-500/40 transition">
+        Go to Scanner 🚀
+      </a>
+    {% else %}
+      <a href="/register/" class="btn-glow inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-10 py-4 font-bold text-slate-900 hover:shadow-2xl hover:shadow-cyan-500/40 transition">
+        Get Started Free 🚀
+      </a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

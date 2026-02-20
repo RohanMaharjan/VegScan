@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}VegScan AI{% endblock %}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui'],
+            display: ['Poppins', 'system-ui']
+          },
+          colors: {
+            'ai-dark': '#0a0e27',
+            'ai-card': '#1a1f3a'
+          },
+          backgroundImage: {
+            'gradient-mesh': 'url("data:image/svg+xml,%3Csvg width="100" height="100" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3CradialGradient id="a" cx="20%25" cy="30%25" r="50%25"%3E%3Cstop offset="0%25" stop-color="%237c3aed"/%3E%3Cstop offset="100%25" stop-color="%2306b6d4" stop-opacity="0.1"/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width="100" height="100" fill="url(%23a)"%3E%3C/rect%3E%3C/svg%3E")',
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'glow': 'glow 3s ease-in-out infinite',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+            },
+            glow: {
+              '0%, 100%': { boxShadow: '0 0 5px rgba(124, 58, 237, 0.5)' },
+              '50%': { boxShadow: '0 0 20px rgba(124, 58, 237, 0.8)' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+  * {
+    scroll-behavior: smooth;
+  }
+
+  :root {
+    --accent: #06b6d4;
+    --accent-weak: rgba(6,182,212,0.12);
+    --glass: rgba(255,255,255,0.04);
+  }
+
+  /* Page transition helper */
+  .page-fade-enter { opacity: 0; transform: translateY(6px); }
+  .page-fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 360ms ease, transform 360ms ease; }
+  .page-fade-exit-active { opacity: 0; transition: opacity 280ms ease; }
+
+  body {
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1629 100%);
+    background-attachment: fixed;
+    font-family: 'Inter', system-ui;
+    letter-spacing: 0.3px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', system-ui;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  p {
+    line-height: 1.65;
+  }
+
+  /* Select dropdown - Make options visible */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+
+  select option {
+    background: #1a1f3a;
+    color: #e5e7eb;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  select option:hover {
+    background: #06b6d4;
+    color: #0a0e27;
+  }
+
+  select option:checked {
+    background: linear-gradient(#06b6d4, #06b6d4);
+    background-color: #06b6d4;
+    color: white;
+  }
+
+  /* Glassmorphism inputs */
+  form input[type="text"],
+  form input[type="email"],
+  form input[type="password"] {
+    width: 100%;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.875rem 1.25rem;
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Inter', system-ui;
+  }
+
+  form input::placeholder { 
+    color: #94a3b8;
+  }
+
+  form input:focus {
+    outline: none;
+    border-color: #06b6d4;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.2), inset 0 0 10px rgba(6, 182, 212, 0.05);
+  }
+
+  form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #cbd5f5;
+    font-weight: 600;
+    font-family: 'Inter', system-ui;
+  }
+
+  form ul.errorlist {
+    margin-bottom: 1rem;
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    list-style: none;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 107, 107, 0.1);
+    border-left: 3px solid #ff6b6b;
+    border-radius: 0.5rem;
+  }
+
+  /* Animated gradient buttons */
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-glow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-glow:hover::before {
+    left: 100%;
+  }
+
+  /* Smooth transitions */
+  a, button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Micro-interaction utility */
+  .micro-hover { transition: transform 240ms cubic-bezier(.2,.9,.2,1), box-shadow 240ms; }
+  .micro-hover:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 10px 30px rgba(2,6,23,0.6); }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.5);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 58, 237, 0.7);
+  }
+
+  /* Reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+  </style>
+</head>
+
+<body class="h-full bg-ai-dark text-slate-100">
+
+<!-- Animated background -->
+<div class="fixed inset-0 -z-10 overflow-hidden">
+  <div class="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+  <div class="absolute top-40 right-10 w-72 h-72 bg-cyan-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+  <div class="absolute -bottom-8 left-20 w-72 h-72 bg-emerald-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+</div>
+
+<header class="sticky top-0 z-50 backdrop-blur-md bg-ai-dark/40 border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 group">
+      <span class="text-3xl animate-float">🧬</span>
+      <span class="text-2xl font-display font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400 bg-clip-text text-transparent group-hover:from-cyan-300 group-hover:via-emerald-300 group-hover:to-purple-300 transition-all">VegScan</span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-8">
+      {% if user.is_authenticated %}
+        <a href="/scanner/" class="text-slate-300 hover:text-cyan-400 font-medium transition">Dashboard</a>
+        <a href="/logout/" class="rounded-lg bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 font-semibold hover:shadow-lg hover:shadow-red-500/50 transition">Logout</a>
+      {% else %}
+        <a href="/login/" class="text-slate-300 hover:text-cyan-400 font-medium transition">Login</a>
+        <a href="/signup/" class="rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-slate-900 font-bold hover:shadow-lg hover:shadow-cyan-500/50 transition">Get Started</a>
+      {% endif %}
+    </nav>
+
+    <!-- Mobile menu toggle -->
+    <button class="md:hidden text-2xl text-cyan-400">☰</button>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-12">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="mt-20 border-t border-white/5 backdrop-blur">
+  <div class="max-w-7xl mx-auto px-6 py-10 text-center">
+    <p class="text-slate-400 text-sm">
+      <span class="font-bold">VegScan AI</span> © {{ now|date:"Y" }} · Powered by Advanced Computer Vision
+    </p>
+  </div>
+</footer>
+
+</body>
+<script>
+// Page fade-in for subtle transitions
+document.documentElement.classList.add('page-fade-enter');
+window.addEventListener('load', () => {
+  requestAnimationFrame(() => document.documentElement.classList.add('page-fade-enter-active'));
+  setTimeout(() => document.documentElement.classList.remove('page-fade-enter','page-fade-enter-active'), 800);
+});
+</script>
+</html>

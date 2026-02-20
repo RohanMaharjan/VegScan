@@ -1,0 +1,72 @@
+[
+  {
+    "timestamp": "2026-02-15T22:02:27.276869",
+    "image_filename": "not_vegetable_20260215_220227_270.jpg",
+    "predicted_label": "Invalid Image",
+    "correct_label": "not_vegetable",
+    "image_path": "feedback/images/not_vegetable_20260215_220227_270.jpg"
+  },
+  {
+    "timestamp": "2026-02-15T22:04:03.049553",
+    "image_filename": "bean_20260215_220403_043.jpg",
+    "predicted_label": "Invalid Image",
+    "correct_label": "bean",
+    "image_path": "feedback/images/bean_20260215_220403_043.jpg"
+  },
+  {
+    "timestamp": "2026-02-15T22:05:14.787965",
+    "image_filename": "capsicum_20260215_220514_770.jpg",
+    "predicted_label": "Invalid Image",
+    "correct_label": "capsicum",
+    "image_path": "feedback/images/capsicum_20260215_220514_770.jpg"
+  },
+  {
+    "timestamp": "2026-02-15T22:05:23.614180",
+    "image_filename": "not_vegetable_20260215_220523_609.jpg",
+    "predicted_label": "Invalid Image",
+    "correct_label": "not_vegetable",
+    "image_path": "feedback/images/not_vegetable_20260215_220523_609.jpg"
+  },
+  {
+    "timestamp": "2026-02-15T22:12:04.843590",
+    "image_filename": "bitter_gourd_20260215_221204_836.jpg",
+    "predicted_label": "Invalid Image",
+    "correct_label": "bitter_gourd",
+    "image_path": "feedback/images/bitter_gourd_20260215_221204_836.jpg"
+  },
+  {
+    "timestamp": "2026-02-15T22:18:05.642881",
+    "image_filename": "not_vegetable_20260215_221805_637.jpg",
+    "predicted_label": "Invalid Image",
+    "correct_label": "not_vegetable",
+    "image_path": "feedback/images/not_vegetable_20260215_221805_637.jpg"
+  },
+  {
+    "timestamp": "2026-02-15T22:18:11.916813",
+    "image_filename": "cauliflower_20260215_221811_913.jpg",
+    "predicted_label": "Invalid Image",
+    "correct_label": "cauliflower",
+    "image_path": "feedback/images/cauliflower_20260215_221811_913.jpg"
+  },
+  {
+    "timestamp": "2026-02-16T08:19:48.839602",
+    "image_filename": "not_vegetable_20260216_081948_828.jpg",
+    "predicted_label": "pumpkin",
+    "correct_label": "not_vegetable",
+    "image_path": "feedback/images/not_vegetable_20260216_081948_828.jpg"
+  },
+  {
+    "timestamp": "2026-02-16T08:37:35.083959",
+    "image_filename": "not_vegetable_20260216_083735_077.jpg",
+    "predicted_label": "pumpkin",
+    "correct_label": "not_vegetable",
+    "image_path": "feedback/images/not_vegetable_20260216_083735_077.jpg"
+  },
+  {
+    "timestamp": "2026-02-20T08:47:16.258973",
+    "image_filename": "not_vegetable_20260220_084716_252.jpg",
+    "predicted_label": "potato",
+    "correct_label": "not_vegetable",
+    "image_path": "feedback/images/not_vegetable_20260220_084716_252.jpg"
+  }
+]
